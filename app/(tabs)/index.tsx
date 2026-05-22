@@ -1,14 +1,17 @@
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, SafeAreaView, Platform, StatusBar as RNStatusBar, Image, Pressable, ActivityIndicator, Modal, Button } from 'react-native';
+import {
+  StyleSheet, Text, View, TextInput, TouchableOpacity,
+  SafeAreaView, Platform, StatusBar as RNStatusBar, Image,
+  Pressable, ActivityIndicator, Modal,
+} from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import Checkbox from 'expo-checkbox';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import TaskList from './src/components/TaskList';
-import { globalStyles } from './src/styles/global';
-import AboutScreen from './src/components/AboutScreen';
-import { useTaskStore, Priority } from './src/store/useTaskStore';
+import TaskList from '../../src/components/TaskList';
+import { globalStyles } from '../../src/styles/global';
+import { useTaskStore, Priority } from '../../src/store/useTaskStore';
 
-export default function App() {
+export default function TasksScreen() {
   const tasks = useTaskStore((state) => state.tasks);
   const loading = useTaskStore((state) => state.loading);
   const filter = useTaskStore((state) => state.filter);
@@ -24,7 +27,6 @@ export default function App() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [taskId, setTaskId] = useState('');
   const [logoError, setLogoError] = useState(false);
-  const [aboutModalVisible, setAboutModalVisible] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [completed, setCompleted] = useState(false);
   const [dueDate, setDueDate] = useState<Date | null>(null);
@@ -80,7 +82,7 @@ export default function App() {
             <Text style={styles.header}>Gerenciador de Tarefas</Text>
           ) : (
             <Image
-              source={require('./assets/task-app-banner.png')}
+              source={require('../../assets/task-app-banner.png')}
               style={styles.logo}
               onError={() => setLogoError(true)}
             />
@@ -93,52 +95,32 @@ export default function App() {
         </View>
 
         <View style={styles.filterContainer}>
-          <TouchableOpacity
-            style={[styles.filterButton, filter === 'all' ? styles.filterButtonActive : styles.filterButtonInactive]}
-            onPress={() => setFilter('all')}
-          >
-            <Text style={filter === 'all' ? styles.filterTextActive : styles.filterTextInactive}>Todas</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.filterButton, filter === 'completed' ? styles.filterButtonActive : styles.filterButtonInactive]}
-            onPress={() => setFilter('completed')}
-          >
-            <Text style={filter === 'completed' ? styles.filterTextActive : styles.filterTextInactive}>Concluídas</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.filterButton, filter === 'pending' ? styles.filterButtonActive : styles.filterButtonInactive]}
-            onPress={() => setFilter('pending')}
-          >
-            <Text style={filter === 'pending' ? styles.filterTextActive : styles.filterTextInactive}>Pendentes</Text>
-          </TouchableOpacity>
+          {(['all', 'completed', 'pending'] as const).map((f) => (
+            <TouchableOpacity
+              key={f}
+              style={[styles.filterButton, filter === f ? styles.filterButtonActive : styles.filterButtonInactive]}
+              onPress={() => setFilter(f)}
+            >
+              <Text style={filter === f ? styles.filterTextActive : styles.filterTextInactive}>
+                {f === 'all' ? 'Todas' : f === 'completed' ? 'Concluídas' : 'Pendentes'}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
 
         <View style={styles.actionButtonsContainer}>
           <Pressable
-            style={({ pressed }) => [
-              styles.actionButton,
-              styles.actionButtonAdd,
-              pressed && styles.actionButtonAddPressed,
-            ]}
+            style={({ pressed }) => [styles.actionButton, styles.actionButtonAdd, pressed && styles.actionButtonAddPressed]}
             onPress={() => setModalVisible(true)}
           >
             <Text style={styles.actionButtonText}>Nova Tarefa</Text>
           </Pressable>
-
           <Pressable
-            style={({ pressed }) => [
-              styles.actionButton,
-              styles.deleteButton,
-              pressed && styles.deleteButtonPressed,
-            ]}
+            style={({ pressed }) => [styles.actionButton, styles.deleteButton, pressed && styles.deleteButtonPressed]}
             onPress={deleteAllTasks}
           >
             <Text style={styles.actionButtonText}>Excluir todas</Text>
           </Pressable>
-        </View>
-
-        <View style={styles.aboutButtonContainer}>
-          <Button title="Sobre o App" onPress={() => setAboutModalVisible(true)} />
         </View>
 
         <TaskList />
@@ -150,12 +132,7 @@ export default function App() {
         )}
       </View>
 
-      <Modal
-        visible={modalVisible}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={resetForm}
-      >
+      <Modal visible={modalVisible} transparent animationType="fade" onRequestClose={resetForm}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>{isUpdating ? 'Editar Tarefa' : 'Nova Tarefa'}</Text>
@@ -205,12 +182,8 @@ export default function App() {
 
             <View style={styles.fieldRow}>
               <Text style={styles.fieldLabel}>Concluída:</Text>
-              <View style={styles.checkboxContainer}>
-                <Checkbox
-                  value={completed}
-                  onValueChange={setCompleted}
-                  color={completed ? '#000' : undefined}
-                />
+              <View style={{ marginLeft: 16 }}>
+                <Checkbox value={completed} onValueChange={setCompleted} color={completed ? '#000' : undefined} />
               </View>
             </View>
 
@@ -251,14 +224,6 @@ export default function App() {
         </View>
       </Modal>
 
-      <Modal
-        visible={aboutModalVisible}
-        animationType="slide"
-        onRequestClose={() => setAboutModalVisible(false)}
-      >
-        <AboutScreen onClose={() => setAboutModalVisible(false)} />
-      </Modal>
-
       <StatusBar style="auto" />
     </SafeAreaView>
   );
@@ -277,218 +242,55 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     paddingHorizontal: 16,
   },
-  headerContainer: {
-    alignItems: 'center',
-    marginTop: 16,
-  },
-  logo: {
-    width: 60,
-    height: 60,
-    marginBottom: 8,
-  },
-  header: {
-    textAlign: 'center',
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  counterContainer: {
-    marginTop: 8,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  counterText: {
-    fontSize: globalStyles.bodyFontSize,
-    color: '#666',
-  },
-  filterContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 8,
-    marginTop: 12,
-  },
-  filterButton: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 16,
-    borderWidth: 1,
-  },
-  filterButtonActive: {
-    backgroundColor: '#000',
-    borderColor: '#000',
-  },
-  filterButtonInactive: {
-    backgroundColor: 'transparent',
-    borderColor: '#000',
-  },
-  filterTextActive: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  filterTextInactive: {
-    color: '#000',
-    fontSize: 14,
-  },
-  actionButtonsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 16,
-    marginTop: 16,
-  },
-  aboutButtonContainer: {
-    marginTop: 16,
-    alignItems: 'center',
-  },
+  headerContainer: { alignItems: 'center', marginTop: 16 },
+  logo: { width: 60, height: 60, marginBottom: 8 },
+  header: { textAlign: 'center', fontSize: 24, fontWeight: 'bold' },
+  counterContainer: { marginTop: 8, flexDirection: 'row', justifyContent: 'center' },
+  counterText: { fontSize: globalStyles.bodyFontSize, color: '#666' },
+  filterContainer: { flexDirection: 'row', justifyContent: 'center', gap: 8, marginTop: 12 },
+  filterButton: { paddingVertical: 6, paddingHorizontal: 12, borderRadius: 16, borderWidth: 1 },
+  filterButtonActive: { backgroundColor: '#000', borderColor: '#000' },
+  filterButtonInactive: { backgroundColor: 'transparent', borderColor: '#000' },
+  filterTextActive: { color: '#fff', fontSize: 14, fontWeight: 'bold' },
+  filterTextInactive: { color: '#000', fontSize: 14 },
+  actionButtonsContainer: { flexDirection: 'row', justifyContent: 'center', gap: 16, marginTop: 16 },
   actionButton: {
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 3,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    flex: 1,
+    paddingVertical: 14, paddingHorizontal: 20, borderRadius: 8,
+    justifyContent: 'center', alignItems: 'center',
+    elevation: 3, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4, flex: 1,
   },
-  actionButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 14,
-    letterSpacing: 0.5,
-  },
-  actionButtonAdd: {
-    backgroundColor: globalStyles.primaryColor,
-    shadowColor: globalStyles.primaryColor,
-  },
-  actionButtonAddPressed: {
-    backgroundColor: '#333',
-    transform: [{ scale: 0.98 }],
-    elevation: 1,
-    shadowOpacity: 0.1,
-  },
-  deleteButton: {
-    backgroundColor: '#ff4d4d',
-    shadowColor: '#ff0000',
-  },
-  deleteButtonPressed: {
-    backgroundColor: '#d9363e',
-    transform: [{ scale: 0.98 }],
-    elevation: 1,
-    shadowOpacity: 0.1,
-  },
+  actionButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 14, letterSpacing: 0.5 },
+  actionButtonAdd: { backgroundColor: globalStyles.primaryColor, shadowColor: globalStyles.primaryColor },
+  actionButtonAddPressed: { backgroundColor: '#333', transform: [{ scale: 0.98 }], elevation: 1, shadowOpacity: 0.1 },
+  deleteButton: { backgroundColor: '#ff4d4d', shadowColor: '#ff0000' },
+  deleteButtonPressed: { backgroundColor: '#d9363e', transform: [{ scale: 0.98 }], elevation: 1, shadowOpacity: 0.1 },
   loaderContainer: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    left: 0,
-    right: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
-    zIndex: 10,
+    position: 'absolute', top: 0, bottom: 0, left: 0, right: 0,
+    justifyContent: 'center', alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.7)', zIndex: 10,
   },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
   modalContent: {
-    width: '90%',
-    maxWidth: 400,
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 24,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
+    width: '90%', maxWidth: 400, backgroundColor: '#fff',
+    borderRadius: 8, padding: 24, elevation: 5,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4,
   },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
+  modalTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 16, textAlign: 'center' },
   modalInput: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 4,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    fontSize: 16,
-    marginBottom: 16,
+    borderWidth: 1, borderColor: '#ccc', borderRadius: 4,
+    paddingVertical: 10, paddingHorizontal: 12, fontSize: 16, marginBottom: 16,
   },
-  fieldRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  fieldLabel: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  checkboxContainer: {
-    marginLeft: 16,
-  },
-  priorityContainer: {
-    flexDirection: 'row',
-    flex: 1,
-    marginLeft: 16,
-    gap: 8,
-    flexWrap: 'wrap',
-  },
-  priorityButton: {
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: '#ccc',
-  },
-  priorityText: {
-    color: '#333',
-  },
-  priorityTextActive: {
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  datePickerBtn: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 4,
-  },
-  modalActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: 12,
-    marginTop: 8,
-  },
-  modalCancelBtn: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-  },
-  modalCancelText: {
-    color: '#666',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  modalSaveBtn: {
-    backgroundColor: '#000',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 4,
-  },
-  modalSaveBtnDisabled: {
-    backgroundColor: '#ccc',
-  },
-  modalSaveText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
+  fieldRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
+  fieldLabel: { fontSize: 16, fontWeight: 'bold' },
+  priorityContainer: { flexDirection: 'row', flex: 1, marginLeft: 16, gap: 8, flexWrap: 'wrap' },
+  priorityButton: { paddingVertical: 6, paddingHorizontal: 10, borderRadius: 4, borderWidth: 1, borderColor: '#ccc' },
+  priorityText: { color: '#333' },
+  priorityTextActive: { color: '#fff', fontWeight: 'bold' },
+  datePickerBtn: { borderWidth: 1, borderColor: '#ccc', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 4 },
+  modalActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 12, marginTop: 8 },
+  modalCancelBtn: { paddingVertical: 10, paddingHorizontal: 16 },
+  modalCancelText: { color: '#666', fontSize: 16, fontWeight: 'bold' },
+  modalSaveBtn: { backgroundColor: '#000', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 4 },
+  modalSaveBtnDisabled: { backgroundColor: '#ccc' },
+  modalSaveText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
 });
