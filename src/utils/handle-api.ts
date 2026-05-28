@@ -8,6 +8,7 @@ export interface TaskItem {
   text: string;
   completed?: boolean;
   dueDate?: string;
+  priority?: 'Baixa' | 'Média' | 'Alta';
 }
 
 export const getAllTasks = (setTasks: React.Dispatch<React.SetStateAction<TaskItem[]>>, setLoading?: React.Dispatch<React.SetStateAction<boolean>>) => {
