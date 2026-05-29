@@ -25,18 +25,18 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   login: async (email, password) => {
-    const { data } = await axios.post(`${baseURL}/auth/login`, { email, password });
+    const { data } = await axios.post(`${baseURL}/api/auth/login`, { email, password });
     await AsyncStorage.setItem(TOKEN_KEY, data.token);
     set({ token: data.token });
   },
 
   register: async (name, email, password) => {
-    await axios.post(`${baseURL}/auth/signup`, { name, email, password });
+    await axios.post(`${baseURL}/api/auth/signup`, { email, password });
     // Só cria a conta — usuário deve fazer login separadamente
   },
 
   signup: async (name, email, password) => {
-    const { data } = await axios.post(`${baseURL}/auth/signup`, { name, email, password });
+    const { data } = await axios.post(`${baseURL}/api/auth/signup`, { email, password });
     await AsyncStorage.setItem(TOKEN_KEY, data.token);
     set({ token: data.token });
   },
